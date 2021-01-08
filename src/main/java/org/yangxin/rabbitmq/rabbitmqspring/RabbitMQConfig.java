@@ -8,11 +8,16 @@ import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitAdmin;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.rabbit.listener.SimpleMessageListenerContainer;
+import org.springframework.amqp.rabbit.listener.adapter.MessageListenerAdapter;
 import org.springframework.amqp.rabbit.listener.api.ChannelAwareMessageListener;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
+import org.yangxin.rabbitmq.rabbitmqspring.adapter.MessageDelegate;
+import org.yangxin.rabbitmq.rabbitmqspring.convert.TextMessageConverter;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -47,10 +52,10 @@ public class RabbitMQConfig {
      * 针对消费者配置
      * 1. 设置交换机类型
      * 2. 将队列绑定到交换机
-     FanoutExchange: 将消息分发到所有的绑定队列，无routingkey的概念
-     HeadersExchange ：通过添加属性key-value匹配
-     DirectExchange:按照routingkey分发到指定队列
-     TopicExchange:多关键字匹配
+     * FanoutExchange: 将消息分发到所有的绑定队列，无routingkey的概念
+     * HeadersExchange ：通过添加属性key-value匹配
+     * DirectExchange:按照routingkey分发到指定队列
+     * TopicExchange:多关键字匹配
      */
     @Bean
     public TopicExchange exchange001() {
@@ -118,10 +123,28 @@ public class RabbitMQConfig {
         container.setAcknowledgeMode(AcknowledgeMode.AUTO);
         container.setExposeListenerChannel(true);
         container.setConsumerTagStrategy(queue -> queue + "_" + UUID.randomUUID().toString());
-        container.setMessageListener((ChannelAwareMessageListener) (message, channel) -> {
-            String msg = new String(message.getBody());
-            log.info("消费者：[{}]", msg);
-        });
+//        container.setMessageListener((ChannelAwareMessageListener) (message, channel) -> {
+//            String msg = new String(message.getBody());
+//            log.info("消费者：[{}]", msg);
+//        });
+
+
+//        // 适配器方式1：默认是有自己的方法名字的，handleMessage
+//        MessageListenerAdapter adapter = new MessageListenerAdapter(new MessageDelegate());
+//        // 可以自己指定一个方法的名字：consumeMessage
+//        adapter.setDefaultListenerMethod("consumeMessage");
+//        // 也可以添加一个转换器，从字节数组转换为String
+//        adapter.setMessageConverter(new TextMessageConverter());
+//        container.setMessageListener(adapter);
+
+        // 适配器方式2：我们的队列名称和方法名称也可以进行一一的匹配
+        MessageListenerAdapter adapter = new MessageListenerAdapter(new MessageDelegate());
+        adapter.setMessageConverter(new TextMessageConverter());
+        Map<String, String> queueOrTag2MethodName = new HashMap<>();
+        queueOrTag2MethodName.put("queue001", "method1");
+        queueOrTag2MethodName.put("queue002", "method2");
+        adapter.setQueueOrTagToMethodName(queueOrTag2MethodName);
+        container.setMessageListener(adapter);
 
         return container;
     }
