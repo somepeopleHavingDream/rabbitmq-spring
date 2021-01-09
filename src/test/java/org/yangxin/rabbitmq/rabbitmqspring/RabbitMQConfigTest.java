@@ -1,19 +1,18 @@
 package org.yangxin.rabbitmq.rabbitmqspring;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
-import org.springframework.amqp.AmqpException;
 import org.springframework.amqp.core.*;
 import org.springframework.amqp.rabbit.core.RabbitAdmin;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.util.CollectionUtils;
+import org.yangxin.rabbitmq.rabbitmqspring.entity.Order;
 
 import java.util.HashMap;
 import java.util.Map;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author yangxin
@@ -25,9 +24,11 @@ class RabbitMQConfigTest {
 
     @Autowired
     private RabbitAdmin rabbitAdmin;
-
     @Autowired
     private RabbitTemplate rabbitTemplate;
+
+    private final ObjectMapper MAPPER = new ObjectMapper();
+
 
     @Test
     public void testRabbitMQ() {
@@ -106,5 +107,46 @@ class RabbitMQConfigTest {
         Message message = new Message("MQ消息".getBytes(), messageProperties);
         rabbitTemplate.send("topic001", "spring.abc", message);
         rabbitTemplate.send("topic002", "rabbit.abc", message);
+    }
+
+    @Test
+    public void testSendJsonMessage() throws JsonProcessingException {
+        Order order = new Order();
+        order.setId("001");
+        order.setName("消息订单");
+        order.setContent("描述信息");
+
+//        ObjectMapper mapper = new ObjectMapper();
+        String json = MAPPER.writeValueAsString(order);
+        log.info("order 4 json: [{}]", json);
+
+        MessageProperties messageProperties = new MessageProperties();
+        // 这里注意一定要修改contentType为application/json
+        messageProperties.setContentType("application/json");
+        Message message = new Message(json.getBytes(), messageProperties);
+
+        rabbitTemplate.send("topic001", "spring.order", message);
+    }
+
+    @Test
+    public void testSendJavaMessage() throws JsonProcessingException {
+        Order order = new Order();
+        order.setId("001");
+        order.setName("消息订单");
+        order.setContent("描述信息");
+
+        String json = MAPPER.writeValueAsString(order);
+        log.info("order 4 json: [{}]", json);
+
+        MessageProperties messageProperties = new MessageProperties();
+        // 这里注意一定要修改contentType为application/json
+        messageProperties.setContentType("application/json");
+        Map<String, Object> headerMap = messageProperties.getHeaders();
+        if (headerMap != null) {
+            headerMap.put("__TypeId__", "org.yangxin.rabbitmq.rabbitmqspring.entity.Order");
+
+            Message message = new Message(json.getBytes(), messageProperties);
+            rabbitTemplate.send("topic001", "spring.order", message);
+        }
     }
 }
