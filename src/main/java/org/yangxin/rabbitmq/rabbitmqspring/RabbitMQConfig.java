@@ -10,18 +10,17 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.rabbit.listener.SimpleMessageListenerContainer;
 import org.springframework.amqp.rabbit.listener.adapter.MessageListenerAdapter;
 import org.springframework.amqp.rabbit.listener.api.ChannelAwareMessageListener;
+import org.springframework.amqp.support.converter.ContentTypeDelegatingMessageConverter;
 import org.springframework.amqp.support.converter.DefaultJackson2JavaTypeMapper;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.yangxin.rabbitmq.rabbitmqspring.adapter.MessageDelegate;
+import org.yangxin.rabbitmq.rabbitmqspring.convert.ImageMessageConverter;
+import org.yangxin.rabbitmq.rabbitmqspring.convert.PDFMessageConverter;
 import org.yangxin.rabbitmq.rabbitmqspring.convert.TextMessageConverter;
-import org.yangxin.rabbitmq.rabbitmqspring.entity.Order;
-import org.yangxin.rabbitmq.rabbitmqspring.entity.Packaged;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -174,20 +173,48 @@ public class RabbitMQConfig {
 //        container.setMessageListener(adapter);
 
         // 1.3 DefaultJackson2JavaTypeMapper & Jackson2JsonMessageConverter 支持java对象多映射转换
+//        MessageListenerAdapter adapter = new MessageListenerAdapter(new MessageDelegate());
+//        adapter.setDefaultListenerMethod("consumeMessage");
+//        Jackson2JsonMessageConverter jackson2JsonMessageConverter = new Jackson2JsonMessageConverter();
+//        DefaultJackson2JavaTypeMapper defaultJackson2JavaTypeMapper = new DefaultJackson2JavaTypeMapper();
+//
+//        Map<String, Class<?>> id2Class = new HashMap<>();
+//        id2Class.put("order", Order.class);
+//        id2Class.put("packaged", Packaged.class);
+//
+//        defaultJackson2JavaTypeMapper.setIdClassMapping(id2Class);
+//        defaultJackson2JavaTypeMapper.setTrustedPackages("*");
+//
+//        jackson2JsonMessageConverter.setJavaTypeMapper(defaultJackson2JavaTypeMapper);
+//        adapter.setMessageConverter(jackson2JsonMessageConverter);
+//        container.setMessageListener(adapter);
+
+        // 1.4 ext convert
         MessageListenerAdapter adapter = new MessageListenerAdapter(new MessageDelegate());
         adapter.setDefaultListenerMethod("consumeMessage");
+
+        // 全局的转换器
+        ContentTypeDelegatingMessageConverter contentTypeDelegatingMessageConverter = new ContentTypeDelegatingMessageConverter();
+
+        TextMessageConverter textMessageConverter = new TextMessageConverter();
+        contentTypeDelegatingMessageConverter.addDelegate("text", textMessageConverter);
+        contentTypeDelegatingMessageConverter.addDelegate("html/text", textMessageConverter);
+        contentTypeDelegatingMessageConverter.addDelegate("xml/text", textMessageConverter);
+        contentTypeDelegatingMessageConverter.addDelegate("text/plain", textMessageConverter);
+
         Jackson2JsonMessageConverter jackson2JsonMessageConverter = new Jackson2JsonMessageConverter();
-        DefaultJackson2JavaTypeMapper defaultJackson2JavaTypeMapper = new DefaultJackson2JavaTypeMapper();
+        contentTypeDelegatingMessageConverter.addDelegate("json", jackson2JsonMessageConverter);
+        contentTypeDelegatingMessageConverter.addDelegate("application/json", jackson2JsonMessageConverter);
 
-        Map<String, Class<?>> id2Class = new HashMap<>();
-        id2Class.put("order", Order.class);
-        id2Class.put("packaged", Packaged.class);
+        ImageMessageConverter imageMessageConverter = new ImageMessageConverter();
+        contentTypeDelegatingMessageConverter.addDelegate("image/png", imageMessageConverter);
+        contentTypeDelegatingMessageConverter.addDelegate("image/jpg", imageMessageConverter);
+        contentTypeDelegatingMessageConverter.addDelegate("image", imageMessageConverter);
 
-        defaultJackson2JavaTypeMapper.setIdClassMapping(id2Class);
-        defaultJackson2JavaTypeMapper.setTrustedPackages("*");
+        PDFMessageConverter pdfMessageConverter = new PDFMessageConverter();
+        contentTypeDelegatingMessageConverter.addDelegate("application/pdf", pdfMessageConverter);
 
-        jackson2JsonMessageConverter.setJavaTypeMapper(defaultJackson2JavaTypeMapper);
-        adapter.setMessageConverter(jackson2JsonMessageConverter);
+        adapter.setMessageConverter(contentTypeDelegatingMessageConverter);
         container.setMessageListener(adapter);
 
         return container;

@@ -1,5 +1,6 @@
 package org.yangxin.rabbitmq.rabbitmqspring.convert;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.core.Message;
 import org.springframework.amqp.core.MessageProperties;
 import org.springframework.amqp.support.converter.MessageConversionException;
@@ -9,6 +10,7 @@ import org.springframework.amqp.support.converter.MessageConverter;
  * @author yangxin
  * 1/8/21 8:00 PM
  */
+@Slf4j
 public class TextMessageConverter implements MessageConverter {
 
     @Override
@@ -18,6 +20,8 @@ public class TextMessageConverter implements MessageConverter {
 
     @Override
     public Object fromMessage(Message message) throws MessageConversionException {
+        log.info("Text MessageConverter.");
+
         MessageProperties messageProperties = message.getMessageProperties();
         if (messageProperties != null) {
             String contentType = messageProperties.getContentType();

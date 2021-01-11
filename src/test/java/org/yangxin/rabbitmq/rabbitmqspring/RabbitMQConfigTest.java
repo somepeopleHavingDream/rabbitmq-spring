@@ -10,7 +10,11 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.yangxin.rabbitmq.rabbitmqspring.entity.Order;
+import org.yangxin.rabbitmq.rabbitmqspring.entity.Packaged;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -147,6 +151,74 @@ class RabbitMQConfigTest {
 
             Message message = new Message(json.getBytes(), messageProperties);
             rabbitTemplate.send("topic001", "spring.order", message);
+        }
+    }
+
+    @Test
+    public void testSendMappingMessage() throws JsonProcessingException {
+        Order order = new Order();
+        order.setId("001");
+        order.setName("消息订单");
+        order.setContent("描述信息");
+
+        String json1 = MAPPER.writeValueAsString(order);
+        log.info("order 4 json: [{}]", json1);
+
+        MessageProperties messageProperties1 = new MessageProperties();
+        // 这里注意一定要修改contentType为application/json
+        messageProperties1.setContentType("application/json");
+        Map<String, Object> headerMap1 = messageProperties1.getHeaders();
+        if (headerMap1 != null) {
+            headerMap1.put("__TypeId__", "order");
+
+            Message message = new Message(json1.getBytes(), messageProperties1);
+            rabbitTemplate.send("topic001", "spring.order", message);
+        }
+
+        Packaged packaged = new Packaged();
+        packaged.setId("002");
+        packaged.setName("包裹消息");
+        packaged.setDescription("包裹描述消息");
+
+        String json2 = MAPPER.writeValueAsString(packaged);
+        log.info("order 4 json: [{}]", json2);
+
+        MessageProperties messageProperties2 = new MessageProperties();
+        // 这里注意一定要修改contentType为application/json
+        messageProperties2.setContentType("application/json");
+        Map<String, Object> headerMap2 = messageProperties2.getHeaders();
+        if (headerMap2 != null) {
+            headerMap2.put("__TypeId__", "packaged");
+
+            Message message = new Message(json2.getBytes(), messageProperties2);
+            rabbitTemplate.send("topic001", "spring.order", message);
+        }
+    }
+
+    @Test
+    public void testSendExtConverterMessage() throws IOException {
+        // image
+//        byte[] body = Files.readAllBytes(Paths.get("/home/yangxin/Downloads", "1.jpg"));
+//
+//        MessageProperties messageProperties = new MessageProperties();
+//        messageProperties.setContentType("image/jpg");
+//        Map<String, Object> headerMap = messageProperties.getHeaders();
+//        if (headerMap != null) {
+//            headerMap.put("extName", "jpg");
+//
+//            Message message = new Message(body, messageProperties);
+//            rabbitTemplate.send("", "image_queue", message);
+//        }
+
+        // pdf
+        byte[] body = Files.readAllBytes(Paths.get("/home/yangxin/Downloads", "2.pdf"));
+
+        MessageProperties messageProperties = new MessageProperties();
+        messageProperties.setContentType("application/pdf");
+        Map<String, Object> headerMap = messageProperties.getHeaders();
+        if (headerMap != null) {
+            Message message = new Message(body, messageProperties);
+            rabbitTemplate.send("", "pdf_queue", message);
         }
     }
 }
