@@ -1,8 +1,6 @@
 package org.yangxin.rabbitmq.rabbitmqspring.adapter;
 
 import lombok.extern.slf4j.Slf4j;
-import org.yangxin.rabbitmq.rabbitmqspring.entity.Order;
-import org.yangxin.rabbitmq.rabbitmqspring.entity.Packaged;
 
 import java.io.File;
 import java.util.Map;
@@ -11,6 +9,7 @@ import java.util.Map;
  * @author yangxin
  * 1/8/21 7:44 PM
  */
+@SuppressWarnings({"CommentedOutCode", "AlibabaRemoveCommentedCode"})
 @Slf4j
 public class MessageDelegate {
 

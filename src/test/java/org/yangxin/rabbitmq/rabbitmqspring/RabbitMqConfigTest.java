@@ -24,7 +24,7 @@ import java.util.Map;
  */
 @SpringBootTest
 @Slf4j
-class RabbitMQConfigTest {
+class RabbitMqConfigTest {
 
     @Autowired
     private RabbitAdmin rabbitAdmin;

@@ -1,6 +1,5 @@
 package org.yangxin.rabbitmq.rabbitmqspring;
 
-import com.rabbitmq.client.Channel;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.core.*;
 import org.springframework.amqp.rabbit.connection.CachingConnectionFactory;
@@ -9,9 +8,7 @@ import org.springframework.amqp.rabbit.core.RabbitAdmin;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.rabbit.listener.SimpleMessageListenerContainer;
 import org.springframework.amqp.rabbit.listener.adapter.MessageListenerAdapter;
-import org.springframework.amqp.rabbit.listener.api.ChannelAwareMessageListener;
 import org.springframework.amqp.support.converter.ContentTypeDelegatingMessageConverter;
-import org.springframework.amqp.support.converter.DefaultJackson2JavaTypeMapper;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
@@ -27,10 +24,11 @@ import java.util.UUID;
  * @author yangxin
  * 1/8/21 3:56 PM
  */
+@SuppressWarnings("AlibabaLowerCamelCaseVariableNaming")
 @Slf4j
 @Configuration
 @ComponentScan({"org.yangxin.rabbitmq.rabbitmqspring"})
-public class RabbitMQConfig {
+public class RabbitMqConfig {
 
     @Bean
     public ConnectionFactory connectionFactory() {
@@ -67,7 +65,8 @@ public class RabbitMQConfig {
 
     @Bean
     public Queue queue001() {
-        return new Queue("queue001", true); //队列持久
+        // 队列持久
+        return new Queue("queue001", true);
     }
 
     @Bean
@@ -82,7 +81,8 @@ public class RabbitMQConfig {
 
     @Bean
     public Queue queue002() {
-        return new Queue("queue002", true); //队列持久
+        // 队列持久
+        return new Queue("queue002", true);
     }
 
     @Bean
@@ -92,7 +92,8 @@ public class RabbitMQConfig {
 
     @Bean
     public Queue queue003() {
-        return new Queue("queue003", true); //队列持久
+        // 队列持久
+        return new Queue("queue003", true);
     }
 
     @Bean
@@ -102,12 +103,14 @@ public class RabbitMQConfig {
 
     @Bean
     public Queue queue_image() {
-        return new Queue("image_queue", true); //队列持久
+        // 队列持久
+        return new Queue("image_queue", true);
     }
 
     @Bean
     public Queue queue_pdf() {
-        return new Queue("pdf_queue", true); //队列持久
+        // 队列持久
+        return new Queue("pdf_queue", true);
     }
 
 
@@ -125,7 +128,7 @@ public class RabbitMQConfig {
         container.setDefaultRequeueRejected(false);
         container.setAcknowledgeMode(AcknowledgeMode.AUTO);
         container.setExposeListenerChannel(true);
-        container.setConsumerTagStrategy(queue -> queue + "_" + UUID.randomUUID().toString());
+        container.setConsumerTagStrategy(queue -> queue + "_" + UUID.randomUUID());
 //        container.setMessageListener((ChannelAwareMessageListener) (message, channel) -> {
 //            String msg = new String(message.getBody());
 //            log.info("消费者：[{}]", msg);
